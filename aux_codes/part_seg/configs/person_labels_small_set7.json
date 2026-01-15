@@ -1,0 +1,10 @@
+{
+    "torso": 1,
+    "lleg": 2,
+    "rleg": 3,
+    "head": 4,
+    "neck": 5,
+    "larm": 6,
+    "rarm": 7,
+    "hair": 8
+}

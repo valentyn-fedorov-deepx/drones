@@ -1,0 +1,266 @@
+l
+ls
+which conda
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+ls
+rm -rf miniconda.sh 
+cd /mnt/c
+ls
+cd Users/Demo5/Desktop/
+ls
+cd volodymyr
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+ls
+bash miniconda.sh
+which conda
+conda init base
+conda init bash
+bash miniconda.sh
+cd /home/demo5/miniconda
+ls
+cd /home/demo5/miniconda3
+ls
+bash uninstall.s
+bash uninstall.sj
+bash uninstall.sh
+cd Users/Demo5/Desktop/
+cd /mnt/c/Users/Demo5/Desktop/volodymyr/
+ls
+bash miniconda.sh 
+which conda
+conda create -n swbgui python==3.11
+conda activate swbgui
+cd /mnt/c/Users/Demo5/Desktop/volodymyr/
+cd sawboneGUI/src/thirdparty/
+git clone https://github.com/facebookresearch/sam2.git && cd sam2
+cd ..
+git clone https://github.com/wzzheng/StreamVGGT.git
+cd StreamVGGT/
+conda install cmake==3.14.0
+pip install -r requirements.txt
+conda install 'llvm-openmp<16'
+cd ../sam2/
+pip install -e .
+cd checkpoints/
+bash download_ckpts.sh 
+cd ..
+pip install PyQt6 pyqtgraph pyopengl supervision loguru
+python main.py
+cccccc
+python main.py
+[200~ls /dev/video*
+~ls /dev/video*
+ls /dev/video*
+python -c "import cv2; [print(i) for i in range(10) if cv2.VideoCapture(i).isOpened()]"
+conda activate swbgui
+sudo nano /etc/wsl.conf
+wsl --shutdown
+exit
+[200~sudo apt update
+sudo apt update
+sudo apt install v4l2loopback-dkms v4l-utils
+sudo modprobe v4l2loopback devices=1 video_nr=10 card_label="OBS-Cam" exclusive_caps=1
+sudo apt install v4l2loopback-dkms v4l-utils
+sudo modprobe v4l2loopback devices=1 video_nr=10 card_label="OBS-Cam" exclusive_caps=1
+conda activate swbgui
+cd /mnt/c/Users/Demo5/Desktop/volodymyr/sawboneGUI/
+python main.py 
+pyton webclient.py 
+python webclient.py 
+sudo apt update
+sudo apt install libxcb-xinerama0 libxcb-xinerama0-dev                  libxkbcommon-x11-0 libxcb-icccm4                  libxcb-image0 libxcb-keysyms1 libxcb-render-util0
+python main.py 
+cd /mnt/c/Users/Demo5/Desktop/volodymyr/sawboneGUI~
+cd ../../
+cd /mnt/c/Users/Demo5/Desktop/volodymyr/sawboneGUI~
+cd ../
+ls
+cd /mnt/c/Users/Demo5/Desktop/volodymyr/sawboneGUI
+conda env list
+conda activate swbgui
+python main.py
+cd ../../
+ls
+cd mnt/c/Users/Demo5/Desktop/volodymyr/
+ls
+cd sawboneGUI/
+python main.ppy
+python main.py
+conda env list
+conda activate swbgui
+python main.py
+cd ../sawboneGUI/
+python main.py
+cd ../../
+ls
+cd mnt/c/Users/Demo5/Desktop/volodymyr/sawboneGUI/
+conda env list
+conda activate swbgui
+python main.py
+cd ../../
+cd mnt/c/Users/Demo5/Desktop/volodymyr/sawboneGUI
+python main.py
+conda activate swbgui
+python main.py
+apt install mesa-utils libglu1-mesa-dev freeglut3-dev mesa-common-dev
+sudo apt install mesa-utils libglu1-mesa-dev freeglut3-dev mesa-common-dev
+export DISPLAY=$(awk '/nameserver / {print $2; exit}' /etc/resolv.conf 2>/dev/null):0
+export LIBGL_ALWAYS_INDIRECT=0
+glxgears
+echo DISPLAY
+export DISPLAY=$(awk '/nameserver / {print $2; exit}' /etc/resolv.conf 2>/dev/null):0
+export LIBGL_ALWAYS_INDIRECT=0
+glxgears
+export LIBGL_ALWAYS_SOFTWARE=true
+glxgears
+export DISPLAY="grep nameserver /etc/resolv.conf | sed 's/nameserver //':0"
+export LIBGL_ALWAYS_INDIRECT=0
+glxgears
+export DISPLAY=$(awk '/nameserver / {print $2; exit}' /etc/resolv.conf 2>/dev/null):0
+glxgears
+conda env list
+[200~glxgears~
+glxgears
+cd /mnt/c/Users/Demo5/Desktop/volodymyr/sawboneGUI
+conda activate swbgui
+python main.py
+[200~unset DISPLAY LIBGL_ALWAYS_INDIRECT QT_QPA_PLATFORM
+~unset DISPLAY LIBGL_ALWAYS_INDIRECT QT_QPA_PLATFORM
+unset DISPLAY LIBGL_ALWAYS_INDIRECT QT_QPA_PLATFORM
+exec $SHELL -l
+ls -d /mnt/wslg
+echo "$WAYLAND_DISPLAY"
+echo "$DISPLAY"
+sudo apt install -y mesa-utils libgl1-mesa-dri libegl1
+glxinfo -B
+glxgears
+export DISPLAY=$(awk '/nameserver / {print $2; exit}' /etc/resolv.conf 2>/dev/null):0
+glxgears
+glxinfo -B
+export LIBGL_ALWAYS_INDIRECT=0
+glxgears
+glxinfo -B
+export QT_QPA_PLATFORM=wayland
+glxgears
+exec $SHELL -l
+glxgears
+cd /mnt/c/Users/Demo5/Desktop/volodymyr/sawboneGUI
+glxgears
+conda activate swbgui
+glxgears
+main.py
+python main.py
+glxgears
+python main.py
+glxgears
+glxinfo | grep "OpenGL renderer"
+python viwer.py 
+glxinfo -B
+export QT_QPA_PLATFORM=xcb
+python viwer.py 
+unset QT_OPENGL
+unset LIBGL_ALWAYS_SOFTWARE
+unset MESA_LOADER_DRIVER_OVERRIDE
+python viwer.py 
+sudo apt update
+sudo apt install -y   libxcb-cursor0   libxkbcommon-x11-0   libxcb-xinerama0   libxcb-icccm4   libxcb-image0   libxcb-keysyms1   libxcb-render-util0
+unset QT_PLUGIN_PATH
+export QT_QPA_PLATFORM=xcb
+# (за бажання) перевірити, що не форсуєте софт-рендер:
+unset QT_OPENGL
+unset LIBGL_ALWAYS_SOFTWARE
+unset MESA_LOADER_DRIVER_OVERRIDE
+python - <<'PY'
+from PyQt6.QtWidgets import QApplication, QLabel
+import sys
+app = QApplication(sys.argv)
+print("QPA platform:", app.platformName())  # очікуємо: xcb
+w = QLabel("Qt6 xcb OK"); w.show()
+app.exec()
+PY
+QT_DEBUG_PLUGINS=1 python viwer.py 
+sudo apt update
+sudo apt install -y   libxcb-shape0   libxcb-cursor0   libxkbcommon-x11-0   libxcb-xinerama0   libxcb-icccm4   libxcb-image0   libxcb-keysyms1   libxcb-render-util0
+unset QT_PLUGIN_PATH
+unset QT_OPENGL
+unset LIBGL_ALWAYS_SOFTWARE
+unset MESA_LOADER_DRIVER_OVERRIDE
+export QT_QPA_PLATFORM=xcb
+ldd /home/demo5/miniconda3/envs/swbgui/lib/python3.11/site-packages/PyQt6/Qt6/plugins/platforms/libqxcb.so | grep "not found" || echo "All good"
+python - <<'PY'
+from PyQt6.QtWidgets import QApplication, QLabel
+import sys
+app = QApplication(sys.argv)
+print("QPA:", app.platformName())  # очікуємо: xcb
+w = QLabel("PyQt6 + xcb OK"); w.show()
+app.exec()
+PY
+python viwer.py 
+python - <<'PY'
+from PyQt6.QtWidgets import QApplication, QLabel
+import sys
+app = QApplication(sys.argv)
+print("QPA platform =", app.platformName())  # має бути: xcb
+w = QLabel("PyQt6 xcb OK"); w.show()
+app.exec()
+PY
+python main.py
+export QT_QPA_PLATFORM=xcb
+unset QT_OPENGL
+unset LIBGL_ALWAYS_SOFTWARE
+unset MESA_LOADER_DRIVER_OVERRIDE
+python viwer.py 
+python main.py
+[200~find / -name libstdc++.so.6 2>/dev/null
+~
+find / -name libstdc++.so.6 2>/dev/null
+python main.py
+sudo  apt-get -y install     libglu1     libxcursor-dev     libxft2     libxinerama1     libfltk1.3-dev \
+sudo apt-get -y install libglu1 libxcursor-dev libxft2 libxinerama1 libfltk1.3-dev libfreetype6-dev libgl1-mesa-dev
+python main.py
+find / -name libstdc++.so.6 2>/dev/null
+export LD_PRELOAD=/mnt/c/Program Files/NVIDIA Corporation/Nsight Systems 2024.5.1/target-linux-x64/host-linux-x64/libstdc++.so.6~
+export LD_PRELOAD=/home/demo5/miniconda3/lib/libstdc++.so.6
+python main.py
+ls
+cd ../
+ls
+cd ../
+ls
+cd usr/
+ls
+cd lib
+ls
+ldconfig -v /usr/bin/gmsh
+cd /mnt/c/Users/Demo5/Desktop/volodymyr/sawboneGUI
+conda env lins
+conda env list
+conda activate swbgui
+python main.py 
+export DISPLAY=$(grep -m1 nameserver /etc/resolv.conf | awk '{print $2}'):0
+python main.py 
+wsl --shutdown
+exit
+conda activate swbgui
+cd /mnt/c/Users/Demo5/Desktop/volodymyr/
+python main.py
+cd sawboneGUI
+python main.py
+sudo apt update
+export LIBGL_ALWAYS_SOFTWARE=true
+python main.py
+sudo apt install mesa-utils mesa-utils-extra libgl1-meesa-dri libgl1-mesa-glx
+sudo apt install mesa-utils mesa-utils-extra libgl1-mesa-dri libgl1-mesa-glx
+export LIBGL_ALWAYS_SOFTWARE=1
+python main.py
+LIBGL_ALWAYS_SOFTWARE=1 python main.py
+find /usr -name "swrast_dri.so"
+sudo find /usr -name "swrast_dri.so"
+ldd /usr/lib/x86_64-linux-gnu/dri/swrast_dri.so
+python main.py
+conda activate swbgui
+cd /mnt/c/Users/Demo5/Desktop/volodymyr/sawboneGUI
+python main.py
+history -w ~/wsl_session_history.txt
+history -w /wsl_session_history.txt
+history -w wsl_session_history.txt

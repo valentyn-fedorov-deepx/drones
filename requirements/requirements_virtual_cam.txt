@@ -1,0 +1,4 @@
+pyvirtualcam
+opencv-python
+pillow
+pyyaml

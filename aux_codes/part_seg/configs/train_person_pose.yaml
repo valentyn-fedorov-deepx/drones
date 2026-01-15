@@ -1,0 +1,34 @@
+data:
+  train:
+    images_path: data/pascal_part/images
+    labels_path: data/labels_person/train
+    add_keypoints_channel: False
+    keypoints_config: configs/pose_keypoints.json
+  val:
+    images_path: data/pascal_part/images
+    labels_path: data/labels_person/val
+    add_keypoints_channel: False
+    keypoints_config: configs/pose_keypoints.json
+    use_augs: False
+  image_size: 512
+  labels_to_idx: configs/person_labels_small_set7.json
+  labels_change_class: configs/full_labels_to_set7.json
+  batch_size: 32
+  n_classes: 8
+model:
+  model_name: DeepLabV3
+  backbone: resnext50_32x4d
+  encoder_weights: imagenet
+  encoder_freeze: False
+  loss: focal
+  optimizer:
+    name: adam
+    params:
+      lr: 0.001
+train:
+  run_name: deeplabv3-imagenet-person-with-pose-baseline
+  trainer:
+    log_every_n_steps: 10
+    max_epochs: 100
+  logger:
+    wandb_project: human_part_segmentation

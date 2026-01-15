@@ -1,0 +1,12 @@
+torch==2.3.0
+torchmetrics==1.4.0.post0
+torchvision==0.18.0
+tensorboard==2.16.2
+albumentations==1.4.7
+opencv-python-headless==4.9.0.80
+numpy==1.26.4
+segmentation-models-pytorch==0.3.3
+lightning==2.2.5
+ultralytics==8.2.32
+wandb==0.17.1
+omegaconf==2.3.0

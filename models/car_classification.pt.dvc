@@ -1,0 +1,5 @@
+outs:
+- md5: 64051284e77c3779a43d4d98bc204605
+  size: 16335206
+  hash: md5
+  path: car_classification.pt

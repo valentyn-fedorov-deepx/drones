@@ -1,0 +1,29 @@
+data:
+  train:
+    images_path: data/pascal_part/images
+    labels_path: data/labels/train
+  val:
+    images_path: data/pascal_part/images
+    labels_path: data/labels/val
+    use_augs: False
+  image_size: 320
+  labels_to_idx: configs/person_labels_small_set7.json
+  labels_change_class: configs/full_labels_to_set7.json
+  batch_size: 32
+  n_classes: 9
+model:
+  model_name: DeepLabV3
+  backbone: resnext50_32x4d
+  encoder_weights: imagenet
+  encoder_freeze: False
+  loss: focal
+  optimizer:
+    name: adam
+    params:
+      lr: 0.001
+train:
+  run_name: initial-run-resnet18-small-set7-multi-step-run
+  trainer:
+    log_every_n_steps: 10
+    max_epochs: 25
+  # ckpt_path: logs/initial-run-resnet18-small-set7-test-run-focal-longer/last-v1.ckpt

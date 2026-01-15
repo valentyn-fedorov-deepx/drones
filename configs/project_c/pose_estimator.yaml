@@ -1,0 +1,11 @@
+model_name: yolov8m-pose
+
+crop_pad_x: 0.24
+crop_pad_y: 0.1
+conf_thr: 0.05
+
+pose_bbox_min_intersection_x: 0.5
+pose_bbox_min_intersection_y: 0.25
+
+min_keypoints_inside_original_bbox: 3
+

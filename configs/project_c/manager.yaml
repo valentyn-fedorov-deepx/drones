@@ -1,0 +1,14 @@
+use_trt: False
+device: cuda
+focal_length_mm: 50
+sensor_ratio: 0.00345
+skip_frames_sloth: 3
+use_flat_earth: False
+show_all_obstacles: False
+detector: yolo_slicing
+mode: False
+
+calculate_car_distance: True
+detect_static_obstacles: False
+detect_dynamic_obstacles: False
+detect_dynamic_cars: True

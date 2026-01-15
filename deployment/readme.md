@@ -1,0 +1,3 @@
+- project_c - websocket server for the project C. 
+- project_la - websocket server for the project LA
+- remote_camera_management - HTTP server that starts server that allows to get images(raw, polarization components, stokes parameters, normals) from the Daheng Cameras; change camera parameters: exposure, gain, bit depth; start recording of the raw data(in .pxi format)

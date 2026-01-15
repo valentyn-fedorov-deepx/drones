@@ -1,0 +1,6 @@
+F: 22000
+median_window: 6
+
+hip_to_shoulder_reference: 0.500
+ear_to_ear_reference: 0.143
+elbow_to_shoulder_reference: 0.230

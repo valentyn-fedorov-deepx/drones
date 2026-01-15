@@ -1,0 +1,4 @@
+model_name: facebook/detr-resnet-101
+conf: 0.5
+model_args:
+  # revision: no_timm

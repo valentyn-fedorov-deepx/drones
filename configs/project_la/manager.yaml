@@ -1,0 +1,21 @@
+drone_detection_config: configs/project_la/drone_detector.yaml
+weapon_detection_config: configs/project_la/weapon_detector.yaml
+people_cars_detection_config: configs/project_la/people_cars_detector.yaml
+
+people_processing_config_path: configs/project_la/people
+
+people_cars_detection_models_path: models/general
+drone_detection_models_path: models/drones
+weapon_detection_models_path: models/weapons
+
+focal_length_mm: 28
+# focal_length_mm: 28
+sensor_ratio: 0.00345
+skip_frames: 4
+im_width: 2448
+im_height: 2048
+
+latitude: 28.619167
+longitude: -81.524167
+altitude: 0
+heading: 2

@@ -1,0 +1,3 @@
+infer_imgsize: 640
+model_name: weapon_detector.pt
+conf: 0.4

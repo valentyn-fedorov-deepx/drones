@@ -1,0 +1,11 @@
+websockets==15.0
+numpy==1.26.4
+omegaconf==2.3.0
+opencv-python==4.11.0.86
+opencv-contrib-python==4.10.0.84
+torch==2.6.0
+ultralytics==8.3.78
+norfair==2.2.0
+loguru==0.7.3
+lapx==0.5.11.post1
+pyyaml

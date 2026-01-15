@@ -1,0 +1,8 @@
+*.keras
+*.jpg
+wandb
+data/json_labels
+data/pascal_part
+data/test.py
+infer_keras.py
+*.png

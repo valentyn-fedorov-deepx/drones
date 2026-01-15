@@ -1,0 +1,8 @@
+QWidget {
+    background-color: white;
+    color: black;
+}  
+
+::disabled {
+    color: gray;
+}

@@ -1,0 +1,4 @@
+use_trt: False
+device: cuda
+focal_length_mm: 50
+sensor_ratio: 0.00345

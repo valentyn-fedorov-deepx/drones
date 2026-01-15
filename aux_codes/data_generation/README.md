@@ -1,0 +1,3 @@
+Install the [groundingdino + sam repo](https://github.com/IDEA-Research/Grounded-Segment-Anything), move the generate_car_part_segmentation.py script into the main directory, and run the script with the following command
+
+> python -W ignore generate_car_part_segmentation.py --config GroundingDINO/groundingdino/config/GroundingDINO_SwinT_OGC.py  --grounded_checkpoint groundingdino_swint_ogc.pth  --sam_checkpoint sam_vit_h_4b8939.pth --box_threshold 0.3  --text_threshold 0.25 --device "cuda"  --output_dir "outputs/full_car_classification_dataset" --input_image "path/to/the/directory/with/images" --text_prompt "car wheel window car_window"

@@ -1,0 +1,3 @@
+weights: https://dl.fbaipublicfiles.com/detectron2/ViTDet/COCO/cascade_mask_rcnn_vitdet_h/f328730692/model_final_f05665.pkl
+config: cascade_mask_rcnn_vitdet_h_75ep.py
+conf_thresh: 0.4

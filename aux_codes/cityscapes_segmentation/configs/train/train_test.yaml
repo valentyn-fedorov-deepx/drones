@@ -1,0 +1,21 @@
+# Training configuration for the segmentation model
+
+epochs: 20
+batch_size: 32
+learning_rate: 0.00001
+weight_decay: 0.0001
+
+# Log training details every N iterations
+log_interval: 100
+
+# Save a checkpoint every N iterations
+checkpoint_interval: 1000
+
+# Device to run the training on (e.g., "cuda" or "cpu")
+device: "cuda"
+
+# Directory to save outputs such as logs and checkpoints
+output_dir: "outputs/train_0"
+
+# Path to the pretrained model
+weights_path: "/nvme0n1-disk/sviatoslav.darmohrai/vyzai/dx_vyzai_people_track/aux_codes/cityscapes_segmentation/weights/ffnet40S/ffnet40S_BBB_cityscapes_state_dict_quarts.pth"

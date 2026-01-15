@@ -1,0 +1,35 @@
+model_name: city_km_wm
+nms: 0.1
+levels:
+  - name: 3
+    params:
+      nms_local: 0.1
+      nms_global: 0.1
+      scale: 1.0
+      batch_size: 1
+      conf: 0.05
+      crop_x: 0.51
+      overlap_x: 0.0
+      crop_y: 0.61
+      overlap_y: 0.0
+      crop_global:
+        t: 0.2
+        b: 0.8
+        l: 0.0
+        r: 1.0
+  - name: 2
+    params:
+      nms_local: 0.1
+      nms_global: 0.1
+      scale: 0.5
+      batch_size: 1
+      conf: 0.1
+      crop_x: 1.0
+      overlap_x: 0.0
+      crop_y: 1.0
+      overlap_y: 0.0
+      crop_global:
+        t: 0.0
+        b: 1.0
+        l: 0.0
+        r: 1.0

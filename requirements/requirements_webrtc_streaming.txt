@@ -1,0 +1,10 @@
+opencv-python
+numpy
+aiortc
+colour
+scikit-learn
+ids_peak
+aiohttp
+scikit-image
+fastapi
+loguru

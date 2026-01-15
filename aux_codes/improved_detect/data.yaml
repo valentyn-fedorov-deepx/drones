@@ -1,0 +1,28 @@
+names:
+  0: person
+nc: 1
+classes: 1
+
+train: /sdb-disk/vyzai/datasets/coco_people_ultralytics/train
+val: /sdb-disk/vyzai/datasets/coco_people_ultralytics/val
+# train: /sdb-disk/vyzai/datasets/citypersons_2/train
+# val: /sdb-disk/vyzai/datasets/citypersons_2/val
+image_size: 640
+
+datasets:
+  - 
+    data_path: /sdb-disk/vyzai/datasets/vyzai_people_detection
+    data_source: our
+    data_source: None
+  -
+    data_path: /sdb-disk/vyzai/datasets/citypersons_2
+    data_source: citypersons
+    # data_source: null
+  -
+    data_path: /sdb-disk/vyzai/datasets/coco_people_ultralytics
+    data_source: coco
+    mosaic_prob: 0.4
+  # data_source: null
+  # -
+  #   data_path: /nvme0n1-disk/sviatoslav.darmohrai/vyzai/dx_vyzai_people_track/datasets/lyft_people
+  #   data_source: our

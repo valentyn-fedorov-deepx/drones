@@ -1,0 +1,3 @@
+infer_imgsize: 640
+model_name: yolo11s
+conf: 0.2

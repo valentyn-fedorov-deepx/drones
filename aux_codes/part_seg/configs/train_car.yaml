@@ -1,0 +1,31 @@
+data:
+  batch_size: 32
+  image_size: 320
+  n_classes: 4
+  labels_change_class: aux_codes/part_seg/configs/car_labels_to_small_set.json
+  labels_to_idx: aux_codes/part_seg/configs/car_labels_small_set.json
+  train:
+    images_path: data/pascal_part/images/
+    labels_path: data/labels_car/train
+  val:
+    images_path: data/pascal_part/images/
+    labels_path: data/labels_car/val
+    use_augs: false
+model:
+  model_name: DeepLabV3
+  backbone: resnext50_32x4d
+  encoder_freeze: false
+  encoder_weights: imagenet
+  loss: focal
+  optimizer:
+    name: adam
+    params:
+      lr: 0.001
+train:
+  run_name: resnext50_32x4d-set7-full-dataset-DeepLabV3-car
+  trainer:
+    log_every_n_steps: 10
+    max_epochs: 200
+    accelerator: cpu
+  logger:
+    wandb_project: car_part_segmentation

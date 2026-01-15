@@ -1,0 +1,9 @@
+.idea
+__pycache__
+*.pt
+*.pth
+output
+GroundingDINO
+videos
+photos
+logs

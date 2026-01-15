@@ -1,0 +1,18 @@
+{
+    "used_classes": {
+        "small": 0,
+        "medium": 1,
+        "large": 2
+    },
+    "all_classes_to_used": {
+        "Sedan": "small",
+        "SUV": "medium",
+        "Convertible": "small",
+        "Coupe": "small",
+        "Cab": "large",
+        "Hatchback": "medium",
+        "Van": "large",
+        "Minivan": "large",
+        "Wagon": "medium"
+    }
+}

@@ -1,0 +1,5 @@
+outs:
+- md5: 9ae2428054f6201d742eb7b4811e4ab9
+  size: 109503116
+  hash: md5
+  path: obst-yolov8m-seg.pt

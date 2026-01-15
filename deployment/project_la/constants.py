@@ -1,0 +1,9 @@
+
+GET_ACTION = "get"
+CONTINUOUS_ACTION = "continuous"
+STOP_CONTINUOUS_ACTION = "stop_continuous"
+SETUP_LOCATION_ACTION = "setup_location"
+SETUP_CAMERA_ACTION = "setup_camera"
+
+DATA_RESPONSE_CODE = 0
+STATUS_RESPONSE_CODE = 1

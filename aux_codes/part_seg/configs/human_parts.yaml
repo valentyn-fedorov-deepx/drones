@@ -1,0 +1,29 @@
+data:
+  batch_size: 32
+  image_size: 320
+  n_classes: 9
+  labels_change_class: configs/full_labels_to_set7.json
+  labels_to_idx: configs/person_labels_small_set7.json
+  train:
+    images_path: data/pascal_part/images
+    labels_path: data/labels/train
+  val:
+    images_path: data/pascal_part/images
+    labels_path: data/labels/val
+    use_augs: false
+    pad_on_image: false
+model:
+  backbone: resnext50_32x4d
+  encoder_freeze: true
+  encoder_weights: imagenet
+  loss: focal
+  model_name: DeepLabV3
+  optimizer:
+    name: adam
+    params:
+      lr: 0.001
+train:
+  run_name: resnext50_32x4d-small-set7-multi-step-run-fixed-frozen
+  trainer:
+    log_every_n_steps: 10
+    max_epochs: 100
