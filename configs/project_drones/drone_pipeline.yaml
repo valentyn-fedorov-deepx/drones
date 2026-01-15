@@ -1,0 +1,35 @@
+# Modular drone pipeline configuration for project_drones
+
+# Detection (YOLOv8 / YOLOv11x)
+detector:
+  config_path: configs/project_drones/drone_detector.yaml
+  models_dir: models/drones_hf/yolov11x/weight
+  device: cuda
+  labels: ["drone"]
+
+# Segmentation: SAM primary, YOLOv8-Seg fallback
+segmentation:
+  sam:
+    enabled: true
+    checkpoint: models/sam/sam_vit_l_0b3195.pth
+    model_type: vit_l
+    device: cuda
+  yolo_fallback:
+    enabled: false
+    model_path: models/drones_seg/best-seg.pt
+    device: cuda
+
+# Silhouette-based classifier
+classification:
+  silhouettes_dir: models/drones/silhouettes
+  image_size: 128
+  top_k: 3
+  chamfer_weight: 0.5
+
+# Scheduler / async
+scheduler:
+  detection_interval: 5            # коли немає треків (пошук дрона)
+  detection_interval_tracked: 30   # коли треки стабільні
+  recovery_interval: 5             # коли давно не було YOLO-детекцій (режим відновлення)
+  stale_detection_frames: 15       # скільки кадрів без детекцій вважати "давно"
+  max_workers: 2
