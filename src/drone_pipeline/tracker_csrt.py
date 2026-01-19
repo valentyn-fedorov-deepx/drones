@@ -30,6 +30,8 @@ class _CSRTTrack:
     dormant: bool = False  # if True, track is hidden but may be re-activated for a short time
     hits: int = 0  # кількість разів, коли трек оновлювався по детекції
     static_frames: int = 0  # скільки кадрів поспіль bbox майже не рухається (ризик "гілки")
+    # Номер останнього кадру, на якому трек був підтверджений детекцією YOLO
+    last_frame_idx: int = 0
 
 
 class CSRTTracker(BaseTracker):
@@ -50,6 +52,7 @@ class CSRTTracker(BaseTracker):
         match_center_dist: float = 60.0,
         motion_threshold: float = 3.0,
         max_static_frames: int = 8,
+        max_reid_frames: int = 300,
     ) -> None:
         """Create CSRT-based tracker with short-term re-identification.
 
@@ -73,10 +76,15 @@ class CSRTTracker(BaseTracker):
         self.match_center_dist = match_center_dist
         self.motion_threshold = motion_threshold
         self.max_static_frames = max_static_frames
+        # Скільки кадрів можемо «пам'ятати» трек у dormant-стані, перш ніж дозволити новий ID
+        self.max_reid_frames = max_reid_frames
+
         self._tracks: Dict[int, _CSRTTrack] = {}
         self._next_id: int = 0
         # Попередній кадр у grayscale для оцінки руху.
         self._prev_gray: Optional[np.ndarray] = None
+        # Лічильник кадрів усередині трекера (незалежний від timestamps)
+        self._frame_idx: int = 0
 
     def _xyxy_to_xywh(self, box: np.ndarray) -> tuple[int, int, int, int]:
         x1, y1, x2, y2 = box.astype(float)
@@ -103,6 +111,7 @@ class CSRTTracker(BaseTracker):
             last_timestamp=det.timestamp,
             misses=0,
             dormant=False,
+            last_frame_idx=self._frame_idx,
         )
         self._tracks[tid] = track
         return track
@@ -207,6 +216,7 @@ class CSRTTracker(BaseTracker):
         tr.misses = 0
         tr.dormant = False
         tr.hits += 1
+        tr.last_frame_idx = self._frame_idx
         return True
 
     def update(
@@ -215,6 +225,8 @@ class CSRTTracker(BaseTracker):
         timestamp: float,
         detections: Optional[List[Detection]] = None,
     ) -> List[TrackedObjectState]:  # type: ignore[override]
+        # Локальний лічильник кадрів трекера (для логіки re-ID в кадрах, а не секундах)
+        self._frame_idx += 1
         detections = detections or []
 
         # 1) Update existing active CSRT trackers based on motion only.
@@ -224,13 +236,37 @@ class CSRTTracker(BaseTracker):
 
         used_dets = set()
 
-        # 2) Detection-driven correction of ACTIVE tracks
+        # 2) Спеціальний режим для одного дрона:
+        #    якщо є хоч один трек у пам'яті (active або dormant) і він не старіший
+        #    за max_reid_frames кадрів, то першу ж детекцію прив'язуємо саме до нього,
+        #    незалежно від IoU/дистанції. Таким чином ID зберігається стабільно,
+        #    поки дрон не зникне дуже надовго.
+        eligible_ids = [
+            tid
+            for tid, tr in self._tracks.items()
+            if (self._frame_idx - tr.last_frame_idx) <= self.max_reid_frames
+        ]
+        if detections and eligible_ids:
+            # Беремо найконфідентнішу детекцію як єдиного дрона
+            best_d_idx = int(max(range(len(detections)), key=lambda i: detections[i].score))
+            det = detections[best_d_idx]
+            # Якщо кандидат лише один — просто переініціалізуємо його
+            if len(eligible_ids) == 1:
+                tid = eligible_ids[0]
+                tr = self._tracks[tid]
+                if self._reset_track_from_detection(tr, frame, det):
+                    used_dets.add(best_d_idx)
+            # Якщо з якоїсь причини кандидатів кілька, далі працює стандартна логіка
+
+        # 3) Detection-driven correction of ACTIVE tracks (за IoU/дистанцією)
         active_ids = [tid for tid, tr in self._tracks.items() if not tr.dormant and tr.tracker is not None]
         if active_ids and detections:
             active_boxes = np.stack([self._tracks[tid].bbox_xyxy for tid in active_ids], axis=0)
             det_boxes = np.stack([np.array(det.bbox, dtype=float) for det in detections], axis=0)
 
             for d_idx, det in enumerate(detections):
+                if d_idx in used_dets:
+                    continue
                 db = det_boxes[d_idx]
                 best_tid: Optional[int] = None
                 best_score = 0.0
@@ -258,7 +294,9 @@ class CSRTTracker(BaseTracker):
         recent_dormant_ids: List[int] = [
             tid
             for tid, tr in self._tracks.items()
-            if tr.dormant and (timestamp - tr.last_timestamp) <= self.reid_time_window_s
+            # Враховуємо тільки ті dormant-треки, які були підтверджені детекцією
+            # не більше ніж max_reid_frames кадрів тому
+            if tr.dormant and (self._frame_idx - tr.last_frame_idx) <= self.max_reid_frames
         ]
         dormant_boxes = (
             np.stack([self._tracks[tid].bbox_xyxy for tid in recent_dormant_ids], axis=0)
@@ -308,7 +346,8 @@ class CSRTTracker(BaseTracker):
         to_delete = [
             tid
             for tid, tr in self._tracks.items()
-            if tr.dormant and (timestamp - tr.last_timestamp) > self.reid_time_window_s
+            # Видаляємо dormant-треки тільки якщо вони не оновлювались більше ніж max_reid_frames кадрів
+            if tr.dormant and (self._frame_idx - tr.last_frame_idx) > self.max_reid_frames
         ]
         for tid in to_delete:
             self._tracks.pop(tid, None)

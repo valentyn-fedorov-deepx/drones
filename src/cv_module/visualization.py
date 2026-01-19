@@ -246,10 +246,28 @@ def plot_object_with_distance(img_to_draw, detected_objects, overlay_img=None,
                                velocity=velocity_vector)
 
         if detected_object.mask is not None and detected_object.mask.size:
-            # Assuming these functions exist elsewhere
+            # Process mask for full-image visualization; be robust to shape mismatches
             mask, contour = get_masks_for_visualization(detected_object.mask)
             x1, y1, x2, y2 = detected_object.bbox
-            full_image_mask[y1:y2, x1:x2][mask] = 255
+
+            # Extract sub-region and ensure mask has the same spatial shape
+            sub = full_image_mask[y1:y2, x1:x2]
+            if sub.shape[:2] != mask.shape[:2]:
+                try:
+                    # Resize boolean mask to fit the bbox region
+                    resized = cv2.resize(mask.astype(np.uint8), (sub.shape[1], sub.shape[0]),
+                                         interpolation=cv2.INTER_NEAREST)
+                    mask_bool = resized.astype(bool)
+                except Exception:
+                    # If anything goes wrong, skip this mask to avoid crashing the whole pipeline
+                    mask_bool = None
+            else:
+                mask_bool = mask.astype(bool)
+
+            if mask_bool is not None:
+                sub[mask_bool] = 255
+                full_image_mask[y1:y2, x1:x2] = sub
+
             if overlay_img is not None:
                 img_to_draw = blend_images_with_mask(overlay_img, img_to_draw,
                                                      full_image_mask * blend_alpha)

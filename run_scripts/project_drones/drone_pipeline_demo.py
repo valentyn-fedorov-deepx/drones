@@ -10,7 +10,8 @@ from src.project_managers.project_drones_manager import ProjectDronesManager
 from src.offline_utils.frame_source import FrameSource
 
 
-def process(source_path: pathlib.Path, pos: int | None, max_frames: int | None, device: str = "cuda"):
+def process(source_path: pathlib.Path, pos: int | None, max_frames: int | None,
+            device: str = "cuda", tracker_backend: str = "python"):
     """Offline demo runner for the project_drones pipeline."""
     logger.add(
         f"logs/drone_drones_demo_{source_path.stem}_{time.strftime('%Y-%m-%d__%H-%M-%S')}.log",
@@ -21,7 +22,12 @@ def process(source_path: pathlib.Path, pos: int | None, max_frames: int | None, 
     im_size = source.im_size
 
     logger.info(f"Using device='{device}' for ProjectDronesManager")
-    manager = ProjectDronesManager(config_path="configs/project_drones/manager.yaml", device=device)
+    logger.info(f"Using tracker_backend='{tracker_backend}' for ProjectDronesManager")
+    manager = ProjectDronesManager(
+        config_path="configs/project_drones/manager.yaml",
+        device=device,
+        tracker_backend=tracker_backend,
+    )
 
     save_path = pathlib.Path("output")
     save_path.mkdir(exist_ok=True)
@@ -73,9 +79,18 @@ def main():
     parser.add_argument("--pos", type=int, default=None, help="Starting position")
     parser.add_argument("--max-frames", type=int, default=None, help="Maximum frames to process")
     parser.add_argument("--device", type=str, default="cuda", help="Device for models: 'cuda' or 'cpu'")
+    parser.add_argument("--tracker-backend", type=str, default="python",
+                        choices=["python", "cpp"],
+                        help="Tracker backend to use: 'python' (default) or 'cpp' (C++ CSRT)")
     args = parser.parse_args()
 
-    process(args.source_path, args.pos, args.max_frames, device=args.device)
+    process(
+        args.source_path,
+        args.pos,
+        args.max_frames,
+        device=args.device,
+        tracker_backend=args.tracker_backend,
+    )
 
 
 if __name__ == "__main__":

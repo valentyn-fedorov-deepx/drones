@@ -16,7 +16,7 @@ from src.utils.common import resource_path
 
 
 class ProjectDronesManager:
-    def __init__(self, config_path: str, device: str = "cuda"):
+    def __init__(self, config_path: str, device: str = "cuda", tracker_backend: str = "python"):
         self.config = OmegaConf.load(resource_path(config_path))
 
         self.imsize = (self.config.im_height, self.config.im_width)
@@ -74,7 +74,14 @@ class ProjectDronesManager:
         )
 
         # Tracking: CSRT-based image tracker (YOLO детектить рідко, CSRT трекає кожен кадр)
-        tracker = CSRTTracker()
+        if tracker_backend == "cpp":
+            from src.drone_pipeline.tracker_csrt_cpp import CppCSRTTracker
+
+            logger.info("Using C++ CSRT tracker backend (scaled CSRT)")
+            tracker = CppCSRTTracker(scale=0.4)
+        else:
+            logger.info("Using Python CSRT tracker backend")
+            tracker = CSRTTracker()
 
         # Orchestrator
         sched_cfg = self.drone_pipeline_cfg.scheduler
