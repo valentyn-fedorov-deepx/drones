@@ -26,9 +26,12 @@ class ProjectLAManager:
 
         cfg_path = resource_path(self.config.drone_detection_config)
         model_path = resource_path(self.config.drone_detection_models_path)
-        self.drones_detector = YoloDetectorTiledContextedTracked(cfg_path,
-                                            model_path,
-                                            device=device, processed_objects=None)
+        self.drones_detector = YoloDetectorTiledContextedTracked(
+            cfg_path,
+            model_path,
+            device=device,
+            processed_objects=["drone"],
+        )
 
         # self.drones_detector = YoloDetector(self.config.drone_detection_config,
         #                                     self.config.drone_detection_models_path,

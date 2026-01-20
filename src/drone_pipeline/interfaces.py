@@ -53,6 +53,8 @@ class TrackedObjectState:
     # Optional kinematics / 3D info (can be filled by existing measurement stack)
     world_xyz: Optional[Tuple[float, float, float]] = None
     velocity_mps: Optional[Tuple[float, float, float]] = None
+    # Tracker reliability hint (e.g., CSRT temporarily lost track but bbox is still shown)
+    tracking_lost: bool = False
 
 
 @runtime_checkable

@@ -52,6 +52,10 @@ class DronePipelineManager:
         max_workers: int = 2,
         recovery_interval: Optional[int] = None,
         stale_detection_frames: int = 15,
+        recovery_conf: Optional[float] = None,
+        recovery_center_dist_factor: float = 6.0,
+        recovery_center_dist_min: float = 80.0,
+        recovery_augment: bool = False,
     ) -> None:
         self._detector = detector
         self._segmenter = segmenter
@@ -67,6 +71,18 @@ class DronePipelineManager:
         self._stale_detection_frames = max(1, stale_detection_frames)
 
         self._frame_idx = 0
+
+        # Recovery-mode detector tuning (for fast re-acquire)
+        self._recovery_conf = recovery_conf
+        self._recovery_center_dist_factor = float(recovery_center_dist_factor)
+        self._recovery_center_dist_min = float(recovery_center_dist_min)
+        self._recovery_augment = bool(recovery_augment)
+        self._base_conf = None
+        if hasattr(detector, "get_conf"):
+            try:
+                self._base_conf = float(getattr(detector, "get_conf")())
+            except Exception:
+                self._base_conf = None
 
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
         self._pending_future: Optional[Future[List[RefinedDetection]]] = None
@@ -120,11 +136,53 @@ class DronePipelineManager:
     # ------------------------------------------------------------------
     # Slow path orchestration
     # ------------------------------------------------------------------
-    def _slow_path_job(self, frame: np.ndarray, timestamp: float) -> List[RefinedDetection]:
+    def _slow_path_job(
+        self,
+        frame: np.ndarray,
+        timestamp: float,
+        track_hint: Optional[tuple[int, int, int, int]] = None,
+        recovery_mode: bool = False,
+    ) -> List[RefinedDetection]:
         """Heavy job: detection + segmentation + classification on a single frame."""
         logger.debug("Slow path started")
 
-        detections = self._detector.detect(frame, timestamp)
+        # Recovery mode: allow lower conf and (optionally) TTA augment
+        if recovery_mode and hasattr(self._detector, "detect_with_overrides"):
+            det_fn = getattr(self._detector, "detect_with_overrides")
+            detections = det_fn(
+                frame,
+                timestamp,
+                conf=self._recovery_conf,
+                augment=self._recovery_augment,
+            )
+        else:
+            detections = self._detector.detect(frame, timestamp)
+
+        # If we have a tracking hint, prefer detections close to the last bbox center
+        if recovery_mode and track_hint is not None and detections:
+            hx1, hy1, hx2, hy2 = track_hint
+            hc_x = (hx1 + hx2) / 2.0
+            hc_y = (hy1 + hy2) / 2.0
+            bw = max(1.0, hx2 - hx1)
+            bh = max(1.0, hy2 - hy1)
+            radius = max(self._recovery_center_dist_min,
+                         self._recovery_center_dist_factor * max(bw, bh))
+
+            near = []
+            for det in detections:
+                x1, y1, x2, y2 = det.bbox
+                dc_x = (x1 + x2) / 2.0
+                dc_y = (y1 + y2) / 2.0
+                dist = float(np.hypot(dc_x - hc_x, dc_y - hc_y))
+                if dist <= radius:
+                    near.append(det)
+
+            if near:
+                detections = near
+            elif self._base_conf is not None:
+                # If nothing nearby, keep only high-confidence detections to avoid false positives
+                detections = [d for d in detections if d.score >= self._base_conf]
+
         refined: List[RefinedDetection] = []
 
         for det in detections:
@@ -160,12 +218,16 @@ class DronePipelineManager:
             (detection_interval_tracked), CSRT/інші трекери тягнуть по кадрах.
         """
         has_tracks = bool(self._latest_tracks)
+        lost_tracks = any(getattr(tr, "tracking_lost", False) for tr in self._latest_tracks)
 
         if not has_tracks:
             interval = self._detection_interval
         else:
+            # Якщо трекер втратив об'єкт (tracking_lost), форсимо агресивний recovery.
+            if lost_tracks:
+                interval = 1
             # Якщо давно не було нових детекцій, форсимо recovery-режим.
-            if self._frames_since_last_detection >= self._stale_detection_frames:
+            elif self._frames_since_last_detection >= self._stale_detection_frames:
                 interval = self._recovery_interval
             else:
                 interval = self._detection_interval_tracked
@@ -177,11 +239,20 @@ class DronePipelineManager:
         if self._pending_future is not None and not self._pending_future.done():
             return
 
-        # Copy frame to avoid lifetime issues
-        frame_copy = frame.copy()
+        # Pass frame by reference to avoid extra copy (frame is not mutated downstream)
         ts_copy = float(timestamp)
+        track_hint = None
+        if lost_tracks and self._latest_tracks:
+            best_tr = max(self._latest_tracks, key=lambda t: getattr(t, "score", 0.0))
+            track_hint = best_tr.bbox
         logger.debug("Scheduling slow path job")
-        self._pending_future = self._executor.submit(self._slow_path_job, frame_copy, ts_copy)
+        self._pending_future = self._executor.submit(
+            self._slow_path_job,
+            frame,
+            ts_copy,
+            track_hint,
+            lost_tracks,
+        )
 
     def _gather_slow_path_results(self) -> None:
         if self._pending_future is None:

@@ -5,7 +5,7 @@ people_cars_detection_config: configs/project_la/people_cars_detector.yaml
 people_processing_config_path: configs/project_la/people
 
 people_cars_detection_models_path: models/general
-drone_detection_models_path: models/drones
+drone_detection_models_path: runs/detect/drone_yolo11s_kd2/weights
 weapon_detection_models_path: models/weapons
 
 focal_length_mm: 28

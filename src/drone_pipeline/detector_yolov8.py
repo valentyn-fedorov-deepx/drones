@@ -32,8 +32,16 @@ class YoloV8Detector(BaseDetector):
         # Optional physical prior for distance estimation
         self.drone_width = float(getattr(self.config, "drone_width_meters", 0.0))
 
-        model_path = os.path.join(models_dir, self.config.model_name)
+        use_trt = bool(getattr(self.config, "use_tensorrt", False))
+        trt_engine = str(getattr(self.config, "trt_engine", ""))
+        if use_trt and trt_engine:
+            model_path = os.path.join(models_dir, trt_engine)
+        else:
+            model_path = os.path.join(models_dir, self.config.model_name)
         model_path = resource_path(model_path)
+        if use_trt and trt_engine and not os.path.exists(model_path):
+            logger.warning(f"TensorRT engine not found at {model_path}, falling back to .pt")
+            model_path = resource_path(os.path.join(models_dir, self.config.model_name))
 
         # Try to import ultralytics lazily so that the rest of the pipeline can
         # still run even if YOLOv8 is not available in the current environment.
@@ -42,7 +50,13 @@ class YoloV8Detector(BaseDetector):
             from ultralytics import YOLO  # type: ignore
 
             logger.info(f"Loading YOLOv8 model from {model_path}")
-            self.model = YOLO(model_path).to(device)
+            self.model = YOLO(model_path)
+            # Only PyTorch models support .to(device); exported formats manage device internally
+            try:
+                if str(model_path).endswith(".pt"):
+                    self.model = self.model.to(device)
+            except Exception as e:
+                logger.warning(f"Failed to move model to {device}: {e}")
             self.device = device
         except ImportError as e:  # pragma: no cover - env dependent
             logger.error(
@@ -58,17 +72,27 @@ class YoloV8Detector(BaseDetector):
         # Basic params from config
         self._imgsz = int(self.config.infer_imgsize)
         self._conf = float(self.config.model_conf)
+        self._augment = bool(getattr(self.config, "model_augment", False))
 
     def get_drone_width(self) -> float:
         """Return configured drone width in meters (if available)."""
         return self.drone_width
 
-    def detect(self, frame: np.ndarray, timestamp: float) -> List[Detection]:  # type: ignore[override]
-        """Run YOLOv8 forward pass and map boxes to Detection objects.
+    def get_conf(self) -> float:
+        return float(self._conf)
 
-        This call is synchronous; the pipeline is responsible for scheduling it
-        on a background thread so that the main video loop is never blocked.
-        """
+    def get_imgsz(self) -> int:
+        return int(self._imgsz)
+
+    def detect_with_overrides(
+        self,
+        frame: np.ndarray,
+        timestamp: float,
+        conf: Optional[float] = None,
+        imgsz: Optional[int] = None,
+        augment: Optional[bool] = None,
+    ) -> List[Detection]:
+        """Run YOLOv8 forward pass with optional runtime overrides."""
 
         # If YOLO model is not available, return no detections but keep the
         # pipeline running. This is useful on environments where ultralytics
@@ -76,13 +100,18 @@ class YoloV8Detector(BaseDetector):
         if self.model is None:
             return []
 
+        use_conf = self._conf if conf is None else float(conf)
+        use_imgsz = self._imgsz if imgsz is None else int(imgsz)
+        use_augment = self._augment if augment is None else bool(augment)
+
         # Ultralytics expects RGB or BGR; the current codebase typically works
         # in RGB for processing. We assume `frame` is RGB here, consistent with
         # existing usages of `view_img`.
         results = self.model(
             frame,
-            imgsz=self._imgsz,
-            conf=self._conf,
+            imgsz=use_imgsz,
+            conf=use_conf,
+            augment=use_augment,
             verbose=False,
         )[0]
 
@@ -114,3 +143,11 @@ class YoloV8Detector(BaseDetector):
 
         logger.debug(f"YOLOv8: produced {len(detections)} detections")
         return detections
+
+    def detect(self, frame: np.ndarray, timestamp: float) -> List[Detection]:  # type: ignore[override]
+        """Run YOLOv8 forward pass and map boxes to Detection objects.
+
+        This call is synchronous; the pipeline is responsible for scheduling it
+        on a background thread so that the main video loop is never blocked.
+        """
+        return self.detect_with_overrides(frame, timestamp)

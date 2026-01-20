@@ -1,7 +1,10 @@
 infer_imgsize: 640
 drone_width_meters: 0.221
 model_name: best.pt
-model_conf: 0.4
+# Optional TensorRT engine (quality-preserving if built from same weights)
+use_tensorrt: true
+trt_engine: best.engine
+model_conf: 0.25
 model_num_workers: 8
 model_augment: False
 tile_size: 640

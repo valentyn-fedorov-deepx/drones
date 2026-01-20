@@ -1,0 +1,18 @@
+# Lightweight realtime drone detector config
+
+# Path is relative to project root and resolved via resource_path
+# TensorRT engine built from YOLOv11x weights (fixed 640x640)
+model_path: models/drones_hf/yolov11x/weight/best.engine
+
+# Inference image size (square). Must match engine shape.
+imgsz: 640
+
+# Confidence and IoU thresholds
+conf: 0.35
+iou: 0.5
+
+# Device
+device: cuda
+
+# Restrict to drone class only (as named in the training dataset/model)
+labels: ["drone"]

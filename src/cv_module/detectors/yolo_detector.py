@@ -21,7 +21,16 @@ class YoloDetector:
         self.config = OmegaConf.load(config_path)
         self.drone_width = self.config.drone_width_meters
         model_path = os.path.join(models_dir, self.config.model_name)
-        self.model = YOLO(resource_path(model_path)).to(device)
+        model_path = resource_path(model_path)
+        self._model_path = model_path
+        self._is_pytorch = str(model_path).endswith(".pt")
+        self.model = YOLO(model_path)
+        # Only PyTorch models support .to(device); exported formats manage device internally
+        try:
+            if self._is_pytorch:
+                self.model = self.model.to(device)
+        except Exception as e:
+            logger.warning(f"Failed to move model to {device}: {e}")
         self._processed_objects = processed_objects
         self._name_map = name_map
         refine_masks = False
@@ -154,7 +163,14 @@ class YoloDetectorTiled(YoloDetector):
         )
         # Preload N copies of the model (one per worker)
         self.num_workers = self.config.model_num_workers
-        self.models = [deepcopy(self.model).to(device) for _ in range(self.num_workers)]
+        if getattr(self, "_is_pytorch", False):
+            self.models = [deepcopy(self.model).to(device) for _ in range(self.num_workers)]
+        else:
+            logger.warning(
+                "Non-PyTorch model detected; disabling model copies and forcing num_workers=1"
+            )
+            self.num_workers = 1
+            self.models = [self.model]
 
         # Tile parameters
         self.tile_size = self.config.tile_size

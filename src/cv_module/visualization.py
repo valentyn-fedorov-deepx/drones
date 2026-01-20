@@ -217,6 +217,8 @@ def annotate(frame, bbox, labels, ann_settings, velocity=None):
 
 def plot_object_with_distance(img_to_draw, detected_objects, overlay_img=None,
                               blend_alpha=0.9):
+    if not detected_objects:
+        return img_to_draw
     full_image_mask = np.zeros(img_to_draw.shape[:2], dtype=np.uint8)
 
     for detected_object in detected_objects:

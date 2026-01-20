@@ -32,6 +32,10 @@ class _CSRTTrack:
     static_frames: int = 0  # скільки кадрів поспіль bbox майже не рухається (ризик "гілки")
     # Номер останнього кадру, на якому трек був підтверджений детекцією YOLO
     last_frame_idx: int = 0
+    # Motion prediction (for fast moves when CSRT misses)
+    last_center: Optional[np.ndarray] = None  # (2,) float
+    velocity: Optional[np.ndarray] = None    # (2,) float per frame
+    lost_frames: int = 0
 
 
 class CSRTTracker(BaseTracker):
@@ -53,6 +57,10 @@ class CSRTTracker(BaseTracker):
         motion_threshold: float = 3.0,
         max_static_frames: int = 8,
         max_reid_frames: int = 300,
+        static_drop_grace_frames: int = 60,
+        output_grace_frames: int = 45,
+        motion_pred_frames: int = 30,
+        motion_pred_alpha: float = 0.6,
     ) -> None:
         """Create CSRT-based tracker with short-term re-identification.
 
@@ -78,6 +86,13 @@ class CSRTTracker(BaseTracker):
         self.max_static_frames = max_static_frames
         # Скільки кадрів можемо «пам'ятати» трек у dormant-стані, перш ніж дозволити новий ID
         self.max_reid_frames = max_reid_frames
+        # Якщо трек статичний, дозволяємо йому "жити" ще N кадрів без YOLO-підтвердження
+        self.static_drop_grace_frames = static_drop_grace_frames
+        # Скільки кадрів показувати bbox після переходу в dormant (щоб не було миготіння)
+        self.output_grace_frames = output_grace_frames
+        # Motion prediction parameters (for fast motion recovery)
+        self.motion_pred_frames = int(motion_pred_frames)
+        self.motion_pred_alpha = float(motion_pred_alpha)
 
         self._tracks: Dict[int, _CSRTTrack] = {}
         self._next_id: int = 0
@@ -136,6 +151,22 @@ class CSRTTracker(BaseTracker):
             ok, box = tr.tracker.update(frame)
             if not ok:
                 tr.misses += 1
+                tr.lost_frames += 1
+                # Predict bbox forward for a short window using last velocity
+                if tr.velocity is not None and tr.last_center is not None and tr.lost_frames <= self.motion_pred_frames:
+                    cx, cy = tr.last_center
+                    vx, vy = tr.velocity
+                    cx_p = cx + vx
+                    cy_p = cy + vy
+                    x1, y1, x2, y2 = tr.bbox_xyxy
+                    w_box = max(1.0, x2 - x1)
+                    h_box = max(1.0, y2 - y1)
+                    x1_p = max(0.0, min(float(W - 1), cx_p - w_box / 2))
+                    y1_p = max(0.0, min(float(H - 1), cy_p - h_box / 2))
+                    x2_p = max(0.0, min(float(W), x1_p + w_box))
+                    y2_p = max(0.0, min(float(H), y1_p + h_box))
+                    tr.bbox_xyxy = np.array([x1_p, y1_p, x2_p, y2_p], dtype=float)
+                    tr.last_center = np.array([cx_p, cy_p], dtype=float)
                 if tr.misses > self.max_misses:
                     # move to dormant state: keep last bbox/time, drop tracker instance
                     tr.dormant = True
@@ -156,6 +187,22 @@ class CSRTTracker(BaseTracker):
             # оновлюється тільки при асоціації з YOLO.
             tr.last_timestamp = timestamp
             tr.misses = 0
+            tr.lost_frames = 0
+
+            # Update velocity based on bbox center (EMA)
+            cx = (x1 + x2) / 2.0
+            cy = (y1 + y2) / 2.0
+            if tr.last_center is not None:
+                dx = cx - tr.last_center[0]
+                dy = cy - tr.last_center[1]
+                if tr.velocity is None:
+                    tr.velocity = np.array([dx, dy], dtype=float)
+                else:
+                    tr.velocity = (
+                        self.motion_pred_alpha * np.array([dx, dy], dtype=float)
+                        + (1.0 - self.motion_pred_alpha) * tr.velocity
+                    )
+            tr.last_center = np.array([cx, cy], dtype=float)
 
             # Оцінка руху всередині bbox для виявлення "залипання" на гілці.
             if prev_gray is not None:
@@ -174,10 +221,11 @@ class CSRTTracker(BaseTracker):
                         else:
                             tr.static_frames = 0
                         if tr.static_frames > self.max_static_frames:
-                            # Вважаємо, що це static background (швидше за все гілка).
-                            tr.dormant = True
-                            tr.tracker = None
-                            continue
+                            # Якщо давно не було YOLO-підтвердження, вважаємо що це static background.
+                            if (self._frame_idx - tr.last_frame_idx) > self.static_drop_grace_frames:
+                                tr.dormant = True
+                                tr.tracker = None
+                                continue
 
     @staticmethod
     def _bbox_iou(a: np.ndarray, b: np.ndarray) -> float:
@@ -217,6 +265,12 @@ class CSRTTracker(BaseTracker):
         tr.dormant = False
         tr.hits += 1
         tr.last_frame_idx = self._frame_idx
+        # Reset motion stats on hard correction
+        cx = (x1 + x2) / 2.0
+        cy = (y1 + y2) / 2.0
+        tr.last_center = np.array([cx, cy], dtype=float)
+        tr.velocity = np.array([0.0, 0.0], dtype=float)
+        tr.lost_frames = 0
         return True
 
     def update(
@@ -352,11 +406,17 @@ class CSRTTracker(BaseTracker):
         for tid in to_delete:
             self._tracks.pop(tid, None)
 
-        # 6) Build output states: only non-dormant (currently active) tracks are visible.
+        # 6) Build output states: show active tracks, and briefly keep dormant ones to avoid flicker.
         states: List[TrackedObjectState] = []
         for tid, tr in self._tracks.items():
+            tracking_lost = False
             if tr.dormant:
-                continue
+                tracking_lost = True
+                if (self._frame_idx - tr.last_frame_idx) > self.output_grace_frames:
+                    continue
+            elif tr.misses > 0:
+                # CSRT failed to update on this frame -> treat as temporarily lost
+                tracking_lost = True
             x1, y1, x2, y2 = tr.bbox_xyxy.astype(int).tolist()
             states.append(
                 TrackedObjectState(
@@ -365,6 +425,7 @@ class CSRTTracker(BaseTracker):
                     score=float(tr.score),
                     label=str(tr.label),
                     timestamp=float(tr.last_timestamp),
+                    tracking_lost=tracking_lost,
                 )
             )
 

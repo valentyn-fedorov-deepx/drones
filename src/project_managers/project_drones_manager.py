@@ -99,6 +99,10 @@ class ProjectDronesManager:
             max_workers=int(sched_cfg.max_workers),
             recovery_interval=recovery_interval,
             stale_detection_frames=stale_detection_frames,
+            recovery_conf=float(getattr(sched_cfg, "recovery_conf", 0.25)),
+            recovery_center_dist_factor=float(getattr(sched_cfg, "recovery_center_dist_factor", 6.0)),
+            recovery_center_dist_min=float(getattr(sched_cfg, "recovery_center_dist_min", 80.0)),
+            recovery_augment=bool(getattr(sched_cfg, "recovery_augment", False)),
         )
 
         # Distance measurer based on physical drone width
@@ -179,7 +183,7 @@ class ProjectDronesManager:
         vizualization = plot_object_with_distance(
             self.latest_data_tensor.view_img.copy(),
             self.detected_objects,
-            self.latest_data_tensor.n_xyz.copy(),
+            self.latest_data_tensor.n_xyz,
         )
         self.latest_data_tensor.visualized_data = vizualization
         return vizualization

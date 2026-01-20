@@ -32,4 +32,9 @@ scheduler:
   detection_interval_tracked: 30   # коли треки стабільні
   recovery_interval: 5             # коли давно не було YOLO-детекцій (режим відновлення)
   stale_detection_frames: 15       # скільки кадрів без детекцій вважати "давно"
+  # Aggressive recovery tuning (when tracker loses fast motion)
+  recovery_conf: 0.25
+  recovery_center_dist_factor: 6.0
+  recovery_center_dist_min: 80
+  recovery_augment: false
   max_workers: 2

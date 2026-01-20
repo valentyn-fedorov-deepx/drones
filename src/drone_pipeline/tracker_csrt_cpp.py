@@ -73,6 +73,9 @@ class CppCSRTTracker(BaseTracker):
         max_static_frames: int = 8,
         label: str = "drone",
         scale: float = 1.0,
+        output_grace_frames: int = 45,
+        motion_pred_frames: int = 30,
+        motion_pred_alpha: float = 0.6,
     ) -> None:
         if SingleCsrtTracker is None:
             raise RuntimeError(
@@ -88,6 +91,14 @@ class CppCSRTTracker(BaseTracker):
         self._label = label
         self._has_track: bool = False
         self._last_score: float = 1.0
+        self._last_bbox: Optional[tuple[int, int, int, int]] = None
+        self._lost_frames: int = 0
+        self._output_grace_frames: int = int(output_grace_frames)
+        # Motion prediction state
+        self._last_center: Optional[tuple[float, float]] = None
+        self._velocity: Optional[tuple[float, float]] = None
+        self._motion_pred_frames: int = int(motion_pred_frames)
+        self._motion_pred_alpha: float = float(motion_pred_alpha)
 
         # Optional global downscaling factor for CSRT to speed up tracking.
         # If scale < 1.0, we resize the frame before passing it to C++ and
@@ -142,6 +153,8 @@ class CppCSRTTracker(BaseTracker):
             else:
                 self._tracker.reset(frame_for_track, bbox_scaled, float(timestamp))
             self._last_score = float(det.score)
+            # Reset lost counter on a fresh detection
+            self._lost_frames = 0
 
         # 3) Оновлюємо CSRT по поточному кадру
         if not self._has_track:
@@ -151,6 +164,33 @@ class CppCSRTTracker(BaseTracker):
 
         if (not ok) or dormant:
             # Трек пішов у dormant або CSRT не зміг оновитись
+            self._lost_frames += 1
+            if self._last_bbox is not None and self._lost_frames <= self._output_grace_frames:
+                x1_i, y1_i, x2_i, y2_i = self._last_bbox
+                # Predict forward using last velocity for a short window
+                if self._velocity is not None and self._last_center is not None and self._lost_frames <= self._motion_pred_frames:
+                    cx, cy = self._last_center
+                    vx, vy = self._velocity
+                    cx_p = cx + vx
+                    cy_p = cy + vy
+                    w_box = max(1, x2_i - x1_i)
+                    h_box = max(1, y2_i - y1_i)
+                    H, W = frame.shape[:2]
+                    x1_i = int(max(0, min(W - 1, cx_p - w_box / 2)))
+                    y1_i = int(max(0, min(H - 1, cy_p - h_box / 2)))
+                    x2_i = int(max(0, min(W, x1_i + w_box)))
+                    y2_i = int(max(0, min(H, y1_i + h_box)))
+                    self._last_bbox = (x1_i, y1_i, x2_i, y2_i)
+                    self._last_center = (cx_p, cy_p)
+                state = TrackedObjectState(
+                    track_id=0,
+                    bbox=(x1_i, y1_i, x2_i, y2_i),
+                    score=self._last_score,
+                    label=self._label,
+                    timestamp=float(timestamp),
+                    tracking_lost=True,
+                )
+                return [state]
             return []
 
         # 4) Масштабуємо координати назад у систему full-res, якщо потрібно
@@ -163,11 +203,28 @@ class CppCSRTTracker(BaseTracker):
 
         # 5) Побудувати TrackedObjectState з фіксованим ID=0
         x1_i, y1_i, x2_i, y2_i = int(x1), int(y1), int(x2), int(y2)
+        # Update velocity based on bbox center (EMA)
+        cx = (x1_i + x2_i) / 2.0
+        cy = (y1_i + y2_i) / 2.0
+        if self._last_center is not None:
+            dx = cx - self._last_center[0]
+            dy = cy - self._last_center[1]
+            if self._velocity is None:
+                self._velocity = (dx, dy)
+            else:
+                self._velocity = (
+                    self._motion_pred_alpha * dx + (1.0 - self._motion_pred_alpha) * self._velocity[0],
+                    self._motion_pred_alpha * dy + (1.0 - self._motion_pred_alpha) * self._velocity[1],
+                )
+        self._last_center = (cx, cy)
+        self._last_bbox = (x1_i, y1_i, x2_i, y2_i)
+        self._lost_frames = 0
         state = TrackedObjectState(
             track_id=0,
             bbox=(x1_i, y1_i, x2_i, y2_i),
             score=self._last_score,
             label=self._label,
             timestamp=float(timestamp),
+            tracking_lost=False,
         )
         return [state]

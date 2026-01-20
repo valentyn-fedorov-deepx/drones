@@ -24,3 +24,11 @@ data
 logs
 recordings
 weights
+
+# Python virtual environments
+.venv/
+venv/
+.env/
+env/
+.venv_*/
+venv_*/

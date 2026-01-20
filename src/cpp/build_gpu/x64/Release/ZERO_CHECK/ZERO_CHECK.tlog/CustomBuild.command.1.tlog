@@ -1,0 +1,10 @@
+^E:\DRONES_PROJECT\SRC\CPP\BUILD_GPU\CMAKEFILES\1D1DB1DB79C6FA76BF8F6E38B0B15243\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SE:/drones_project/src/cpp -BE:/drones_project/src/cpp/build_gpu --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file E:/drones_project/src/cpp/build_gpu/csrt_tracker_ext.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

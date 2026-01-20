@@ -1,0 +1,8 @@
+# Drone KD dataset generated from YOLOv11x teacher pseudo-labels
+
+path: data_kd/drone
+train: train/images
+val: valid/images
+
+nc: 1
+names: [drone]

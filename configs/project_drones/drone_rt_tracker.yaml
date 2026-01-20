@@ -1,0 +1,15 @@
+# Lightweight IOU-based tracker config for realtime drone tracking
+
+# How many consecutive frames a track can survive without being matched
+# before it is removed.
+max_age_frames: 15
+
+# Minimum number of associated detections before a track becomes visible
+# in the output.
+min_hits: 3
+
+# IOU threshold for associating detections to existing tracks.
+iou_match_threshold: 0.3
+
+# Upper bound on simultaneously active tracks (drones).
+max_tracks: 4

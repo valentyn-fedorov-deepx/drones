@@ -20,7 +20,9 @@ class FrameSource:
     def __init__(self, video_path: str, pos: int = None,
                  max_frames: int = None, loop: bool = False):
         self.video_path = video_path
-        p_video_path = pathlib.Path(video_path)
+        p_video_path = pathlib.Path(video_path).resolve()
+        if not p_video_path.exists():
+            raise FileNotFoundError(f"Video source not found: {p_video_path}")
 
         self.files_mode = p_video_path.is_dir()
         self.pos = 0 if pos is None else pos
@@ -37,8 +39,9 @@ class FrameSource:
         self.loop = loop
 
         if not self.files_mode:
-            self.video_in = cv.VideoCapture(str(video_path))
-            assert self.video_in.isOpened()
+            self.video_in = cv.VideoCapture(str(p_video_path))
+            if not self.video_in.isOpened():
+                raise IOError(f"Failed to open video file: {p_video_path}")
 
             total_frames = int(self.video_in.get(cv.CAP_PROP_FRAME_COUNT))
 
@@ -80,7 +83,20 @@ class FrameSource:
             else:
                 raise StopIteration
 
-        frame_data = self.__getitem__(self.pos)
+        if self.files_mode:
+            frame_data = self.__getitem__(self.pos)
+        else:
+            # Sequential read for video to avoid per-frame seeking overhead
+            ret, frame = self.video_in.read()
+            if not ret:
+                if self.loop:
+                    self._reset()
+                    ret, frame = self.video_in.read()
+                    if not ret:
+                        raise StopIteration
+                else:
+                    raise StopIteration
+            frame_data = DataPixelTensor(frame, fake_normals=True)
 
         self.pos += 1
         self.i_frame += 1
@@ -118,6 +134,12 @@ class FrameSource:
 
     @property
     def im_size(self):
+        if not self.files_mode:
+            # Use capture metadata to avoid expensive seeking/reading
+            w = int(self.video_in.get(cv.CAP_PROP_FRAME_WIDTH))
+            h = int(self.video_in.get(cv.CAP_PROP_FRAME_HEIGHT))
+            if w > 0 and h > 0:
+                return (h, w, 3)
         frame = self.__getitem__(1)
         return frame.raw.shape
 
